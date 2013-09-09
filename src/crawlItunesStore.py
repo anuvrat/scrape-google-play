@@ -81,7 +81,7 @@ def getAppDetails( appUrl ):
     appDetails = {}
     appDetails['app_url'] = appUrl
 
-    titleDiv = soup.find( 'div', {'id' : 'title', 'class' : 'intro '} )
+    titleDiv = soup.find( 'div', {'id' : 'title'} )
     appDetails['title'] = titleDiv.find( 'h1' ).getText()
     appDetails['developer'] = titleDiv.find( 'h2' ).getText()
 
@@ -157,7 +157,11 @@ if __name__ == '__main__':
         app = apps_pending.pop()
         if not app: continue
 
-        app_data = getAppDetails( app )
+        try:
+            app_data = getAppDetails( app )
+        except Exception as e:
+            print( app, e )
+            exit( 1 )
 
         if not app_data:
             continue
