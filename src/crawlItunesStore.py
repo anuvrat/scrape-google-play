@@ -14,7 +14,7 @@ import codecs
 
 def loadState():
     try:
-        state_file = open( "itunes_store_state_dump", "rb" )
+        state_file = open( "itunes_store_state_dump.pba", "rb" )
         apps_discovered = pickle.load( state_file )
         apps_pending = pickle.load( state_file )
         state_file.close()
@@ -27,7 +27,6 @@ def loadState():
 character_encoding = 'utf-8'
 apps_discovered, apps_pending = loadState()
 count_offset = len( apps_discovered )
-count_offset2 = len( apps_pending )
 apps_categories = {}
 
 start_time = datetime.now()
@@ -47,13 +46,12 @@ def reportProgress():
     current_time = datetime.now()
     elapsed = current_time - start_time
     v = ( ( len( apps_discovered ) - count_offset ) / elapsed.seconds ) * 60
-    v2 = ( ( len( apps_pending ) - count_offset2 ) / elapsed.seconds ) * 60
     t = len( apps_pending ) / v if v > 0 else 0
-    print( "Pending = ", len( apps_pending ), " Discovered = ", len( apps_discovered ), " Velocity = ", str( v ), " parsed per min and ", str( v2 ), " discovered per min Time remaining in min = ", str( t ) )
+    print( "Pending = ", len( apps_pending ), " Discovered = ", len( apps_discovered ), " Velocity = ", str( v ), " parsed per min and Time remaining in min = ", str( t ) )
     print( json.dumps( apps_categories ) )
 
 def saveState():
-    state_file = open( "itunes_store_state_dump", "wb" )
+    state_file = open( "itunes_store_state_dump.pba", "wb" )
     pickle.dump( apps_discovered, state_file )
     pickle.dump( apps_pending, state_file )
     state_file.close()
@@ -78,6 +76,9 @@ def getAppDetails( appUrl ):
     soup = getPageAsSoup( appUrl )
     if not soup: return None
 
+    pTitleDiv = soup.find( 'p', {'class' : 'title'} )
+    if pTitleDiv and pTitleDiv.getText() == 'One Moment Please.': return None
+
     appDetails = {}
     appDetails['app_url'] = appUrl
 
@@ -86,6 +87,7 @@ def getAppDetails( appUrl ):
     appDetails['developer'] = titleDiv.find( 'h2' ).getText()
 
     detailsDiv = soup.find( 'div', {'id' : 'left-stack'} )
+    if not detailsDiv: return None
 
     priceDiv = detailsDiv.find( 'div', {'class' : 'price'} )
     if priceDiv: appDetails['price'] = priceDiv.getText()
@@ -122,10 +124,6 @@ def getAppDetails( appUrl ):
             if text.endswith( 'Web Site' ): appDetails['developer_wesite'] = href
             elif text.endswith( 'Support' ): appDetails['support'] = href
             elif text.endswith( 'Agreement' ): appDetails['license'] = href
-
-    for moreApps in soup.find( 'a', href = re.compile( '^https://itunes.apple.com/us/app' ) ):
-        moreAppLink = moreApps.get( 'href' )
-        if moreAppLink not in apps_discovered and moreAppLink not in apps_pending: apps_pending.append( moreAppLink )
 
     apps_discovered.append( appUrl )
 
