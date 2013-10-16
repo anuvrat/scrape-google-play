@@ -88,6 +88,7 @@ def getAppDetails(app_url):
 
     apps_discovered.append( app_url )
 
+    print( g_app_url )
     title_div = soup.find( 'div', {'class':'document-title'} )
     app_details['title'] = title_div.find( 'div' ).get_text().strip()
 
@@ -149,7 +150,10 @@ def getTopAppsData( url, start, num, app_type ):
     skipped_apps = []
     for div in soup.findAll( 'div', {'class' : 'details'} ):
         title = div.find( 'a', {'class':'title'} )
-        app_details = getAppDetails( title.get( 'href' ) )
+        try:
+            app_details = getAppDetails( title.get( 'href' ) )
+        except AttributeError:
+            pass
         if app_details: apps.append( app_details )
         else: skipped_apps.append( title.get( 'href' ) )
 
@@ -206,7 +210,10 @@ while apps_pending:
     count = count - 1
 
     app = apps_pending.pop()
-    app_data = getAppDetails( app )
+    try:
+        app_data = getAppDetails( app )
+    except AttributeError:
+        pass
     if not app_data: 
       continue
     if app_data['category'].upper() not in fileHandlers:
