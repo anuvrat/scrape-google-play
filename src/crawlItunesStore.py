@@ -11,6 +11,7 @@ import re
 import string
 import json
 import codecs
+import urllib2
 
 def loadState():
     try:
@@ -33,8 +34,8 @@ start_time = datetime.now()
 
 def getPageAsSoup( url ):
     try:
-        response = urllib.request.urlopen( url )
-    except urllib.error.HTTPError as e:
+        response = urllib2.urlopen(urllib2.Request( url ))
+    except urllib2.HTTPError as e:
         print( "HTTPError with: ", url, e )
         return None
     the_page = response.read()
