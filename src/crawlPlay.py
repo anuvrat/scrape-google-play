@@ -11,6 +11,7 @@ import codecs
 import json
 import pickle
 from datetime import datetime
+import urllib2
 
 def loadState():
     try:
@@ -33,14 +34,14 @@ start_time = datetime.now()
 
 def getPageAsSoup( url, post_values ):
     if post_values:
-        data = urllib.parse.urlencode( post_values )
+        data = urllib.urlencode( post_values )
         data = data.encode( character_encoding )
-        req = urllib.request.Request( url, data )
+        req = urllib2.Request( url, data )
     else:
         req = url
     try:
-        response = urllib.request.urlopen( req )
-    except urllib.error.HTTPError as e:
+        response = urllib2.urlopen( req )
+    except urllib2.HTTPError as e:
         print( "HTTPError with: ", url, "\t", e )
         return None
     the_page = response.read()
@@ -152,13 +153,14 @@ def getTopAppsData( url, start, num, app_type ):
         title = div.find( 'a', {'class':'title'} )
         try:
             app_details = getAppDetails( title.get( 'href' ) )
+            if app_details: apps.append( app_details )
+            else: skipped_apps.append( title.get( 'href' ) )
         except AttributeError:
-            pass
-        if app_details: apps.append( app_details )
-        else: skipped_apps.append( title.get( 'href' ) )
+            skipped_apps.append( title.get( 'href' ) )
+
 
     return apps, skipped_apps
-
+    
 def getApps( url ):
     previous_apps = []
     previous_skipped_apps = []
